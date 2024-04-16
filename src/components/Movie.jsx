@@ -1,9 +1,31 @@
 import React, { useState } from 'react'
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { UserAuth } from '../context/AuthContext';
+import { db } from '../firebase';
+import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 
 const Movie = ({item, id}) => {
     const [like, setLike] = useState(false)
+    const [saved, setSaved] = useState(false)
+    const {user} = UserAuth()
+    const movieID = doc(db, 'users', `${user?.email}`)
 
+    const saveShow = async() => {
+        if(user) {
+            setLike(!like)
+            setSaved(true)
+            await updateDoc(movieID, {
+                savedShows: arrayUnion({
+                    id: item.id,
+                    title: item.title,
+                    img: item.backdrop_path
+                })
+            })
+        }else{
+            alert('Please login to save a movie');
+        }
+    }
+    
   return (
       <div key={id} className='w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280]px inline-block cursor-pointer relative p-2'>
         <img className='w-full h-auto block' src={`https://image.tmdb.org/t/p/w500/${item?.backdrop_path}`} alt={item?.title} />
@@ -11,8 +33,11 @@ const Movie = ({item, id}) => {
             <p className='white-space-normal text-xs md:text-sm font-bold flex justify-center items-center text-center h-full'>
                 {item?.title}
             </p>
-            <p className='absolute top-4 left-4 text-gray-300 '>
-                {like ? <FaHeart /> : <FaRegHeart />}
+            <p
+            onClick={saveShow} 
+            className='absolute top-4 left-4 text-gray-300 '>
+                {like ? <FaHeart style={{ color: 'red' }} /> : <FaRegHeart className='' />}
+
             </p>
         </div>
       </div>
